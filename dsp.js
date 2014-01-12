@@ -4,6 +4,8 @@
  *  Created by Corban Brook <corbanbrook@gmail.com> on 2010-01-01.
  *  Copyright 2010 Corban Brook. All rights reserved.
  *
+ *  Forked by Zachary Wemlinger <me@zacharywemlinger.com> and packaged
+ *  for use by Node.js / Require.js
  */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +56,7 @@ var DSP = {
 };
 
 // Setup arrays for platforms which do not support byte arrays
-function setupTypedArray(name, fallback) {
+var setupTypedArray = function(name, fallback) {
   // check if TypedArray exists
   // typeof on Minefield and Chrome return function, typeof on Webkit returns object.
   if (typeof this[name] !== "function" && typeof this[name] !== "object") {
@@ -239,7 +241,7 @@ DSP.Peak = function(buffer) {
 };
 
 // Fourier Transform Module used by DFT, FFT, RFFT
-function FourierTransform(bufferSize, sampleRate) {
+var FourierTransform = DSP.FourierTransform = function(bufferSize, sampleRate) {
   this.bufferSize = bufferSize;
   this.sampleRate = sampleRate;
   this.bandwidth  = 2 / bufferSize * sampleRate / 2;
@@ -295,7 +297,7 @@ function FourierTransform(bufferSize, sampleRate) {
  *
  * @constructor
  */
-function DFT(bufferSize, sampleRate) {
+var DFT = DSP.DFT = function(bufferSize, sampleRate) {
   FourierTransform.call(this, bufferSize, sampleRate);
 
   var N = bufferSize/2 * bufferSize;
@@ -324,7 +326,7 @@ DFT.prototype.forward = function(buffer) {
       rval,
       ival;
 
-  for (var k = 0; k < this.bufferSize/2; k++) {
+  for (var k = (this.bufferSize/2) - 1; k >= 0; k--) {
     rval = 0.0;
     ival = 0.0;
 
@@ -350,7 +352,7 @@ DFT.prototype.forward = function(buffer) {
  *
  * @constructor
  */
-function FFT(bufferSize, sampleRate) {
+var FFT = DSP.FFT = function(bufferSize, sampleRate) {
   FourierTransform.call(this, bufferSize, sampleRate);
    
   this.reverseTable = new Uint32Array(bufferSize);
@@ -551,7 +553,7 @@ FFT.prototype.inverse = function(real, imag) {
 // the rest of this was translated from C, see http://www.jjj.de/fxt/
 // this is the real split radix FFT
 
-function RFFT(bufferSize, sampleRate) {
+var RFFT = DSP.RFFT = function(bufferSize, sampleRate) {
   FourierTransform.call(this, bufferSize, sampleRate);
 
   this.trans = new Float32Array(bufferSize);
@@ -623,7 +625,6 @@ function RFFT(bufferSize, sampleRate) {
 
   this.generateReverseTable();
 }
-
 
 // Ordering of output:
 //
@@ -827,7 +828,7 @@ RFFT.prototype.forward = function(buffer) {
   return spectrum;
 };
 
-function Sampler(file, bufferSize, sampleRate, playStart, playEnd, loopStart, loopEnd, loopMode) {
+var Sampler = DSP.Sampler = function(file, bufferSize, sampleRate, playStart, playEnd, loopStart, loopEnd, loopMode) {
   this.file = file;
   this.bufferSize = bufferSize;
   this.sampleRate = sampleRate;
@@ -876,6 +877,7 @@ function Sampler(file, bufferSize, sampleRate, playStart, playEnd, loopStart, lo
   audio.src = file;
   audio.play();
 }
+
 
 Sampler.prototype.applyEnvelope = function() {
   this.envelope.process(this.signal);
@@ -957,7 +959,7 @@ Sampler.prototype.reset = function() {
  *
  * @contructor
  */
-function Oscillator(type, frequency, amplitude, bufferSize, sampleRate) {
+var Oscillator = DSP.Oscillator = function(type, frequency, amplitude, bufferSize, sampleRate) {
   this.frequency  = frequency;
   this.amplitude  = amplitude;
   this.bufferSize = bufferSize;
@@ -1116,7 +1118,7 @@ Oscillator.Pulse = function(step) {
   // stub
 };
  
-function ADSR(attackLength, decayLength, sustainLevel, sustainLength, releaseLength, sampleRate) {
+var ADSR = DSP.ADSR = function(attackLength, decayLength, sustainLevel, sustainLength, releaseLength, sampleRate) {
   this.sampleRate = sampleRate;
   // Length in seconds
   this.attackLength  = attackLength;
@@ -1212,7 +1214,7 @@ ADSR.prototype.disable = function() {
   this.samplesProcessed = -1;
 };
  
-function IIRFilter(type, cutoff, resonance, sampleRate) {
+var IIRFilter = DSP.IIRFilter = function(type, cutoff, resonance, sampleRate) {
   this.sampleRate = sampleRate;
 
   switch(type) {
@@ -1304,7 +1306,7 @@ IIRFilter.LP12.prototype.addEnvelope = function(envelope) {
   this.envelope = envelope;
 };
 
-function IIRFilter2(type, cutoff, resonance, sampleRate) {
+var IIRFilter2 = DSP.IIRFilter2 = function(type, cutoff, resonance, sampleRate) {
   this.type = type;
   this.cutoff = cutoff;
   this.resonance = resonance;
@@ -1368,7 +1370,7 @@ IIRFilter2.prototype.set = function(cutoff, resonance) {
 
 
 
-function WindowFunction(type, alpha) {
+var WindowFunction = DSP.WindowFunction = function(type, alpha) {
   this.alpha = alpha;
  
   switch(type) {
@@ -1488,7 +1490,7 @@ function sinh (arg) {
  */
 // Implementation based on:
 // http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
-function Biquad(type, sampleRate) {
+var Biquad = DSP.Biquad = function(type, sampleRate) {
   this.Fs = sampleRate;
   this.type = type;  // type of the filter
   this.parameterType = DSP.Q; // type of the parameter
@@ -1844,7 +1846,7 @@ DSP.freqz = function(b, a, w) {
  *  Copyright 2010 Ricard Marxer. All rights reserved.
  *
  */
-function GraphicalEq(sampleRate) {
+var GraphicalEq = DSP.GraphicalEq = function(sampleRate) {
   this.FS = sampleRate;
   this.minFreq = 40.0;
   this.maxFreq = 16000.0;
@@ -1960,7 +1962,7 @@ function GraphicalEq(sampleRate) {
  *
  * @constructor
  */
-function MultiDelay(maxDelayInSamplesSize, delayInSamples, masterVolume, delayVolume) {
+var MultiDelay = DSP.MultiDelay = function(maxDelayInSamplesSize, delayInSamples, masterVolume, delayVolume) {
   this.delayBufferSamples   = new Float32Array(maxDelayInSamplesSize); // The maximum size of delay
   this.delayInputPointer     = delayInSamples;
   this.delayOutputPointer   = 0;
@@ -2061,7 +2063,7 @@ MultiDelay.prototype.process = function(samples) {
  * @constructor
  */
 
-function SingleDelay(maxDelayInSamplesSize, delayInSamples, delayVolume) {
+var SingleDelay = DSP.SingleDelay = function(maxDelayInSamplesSize, delayInSamples, delayVolume) {
   this.delayBufferSamples = new Float32Array(maxDelayInSamplesSize); // The maximum size of delay
   this.delayInputPointer  = delayInSamples;
   this.delayOutputPointer = 0;
@@ -2152,7 +2154,7 @@ SingleDelay.prototype.process = function(samples) {
  *
  * @constructor
  */
-function Reverb(maxDelayInSamplesSize, delayInSamples, masterVolume, mixVolume, delayVolume, dampFrequency) {
+var Reverb = DSP.Reverb = function(maxDelayInSamplesSize, delayInSamples, masterVolume, mixVolume, delayVolume, dampFrequency) {
   this.delayInSamples   = delayInSamples;
   this.masterVolume     = masterVolume;
   this.mixVolume       = mixVolume;
@@ -2300,3 +2302,20 @@ Reverb.prototype.process = function (interleavedSamples){
   return outputSamples;
 };
 
+/* SEE: https://github.com/umdjs/umd */
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(factory);
+    } else if (typeof exports === 'object') {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like enviroments that support module.exports,
+        // like Node.
+        module.exports = factory();
+    } else {
+        // Browser globals (root is window)
+        root.returnExports = factory();
+  }
+}(this, function () {
+  return DSP;
+}));
