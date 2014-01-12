@@ -1,4 +1,6 @@
-                                  
+NOTE: This is a fork of https://github.com/corbanbrook/dsp.js.git meant to 
+    allow use of DSP.js with Node.js/Require.js.
+
                                   DSP.js
 
 DSP.js is a comprehensive digital signal processing library for javascript. 
